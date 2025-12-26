@@ -65,15 +65,19 @@ async def generate_melody(request: MelodyRequest) -> ApiResponse:
     """
     Generate a melodic line based on constraints.
 
-    Not yet implemented - returns placeholder response.
+    Supports key signatures, contour shapes, rhythmic density,
+    range constraints, and more.
     """
-    return ApiResponse(
-        success=False,
-        error=ErrorDetail(
-            code="NOT_IMPLEMENTED",
-            message="generate_melody is not yet implemented. Coming in Phase 2.",
-        ),
-    )
+    service = get_service()
+    response = service.generate_melody(request)
+
+    if not response.success:
+        raise HTTPException(
+            status_code=400,
+            detail=response.error.model_dump() if response.error else "Unknown error",
+        )
+
+    return response
 
 
 @app.post("/transform_phrase", response_model=ApiResponse)
@@ -129,15 +133,19 @@ async def realize_chord(request: RealizeChordRequest) -> ApiResponse:
     """
     Generate specific voicings for chord symbols.
 
-    Not yet implemented - returns placeholder response.
+    Supports multiple voicing styles (close, open, drop2, drop3, quartal),
+    inversions, instrument-specific constraints, and slash chords.
     """
-    return ApiResponse(
-        success=False,
-        error=ErrorDetail(
-            code="NOT_IMPLEMENTED",
-            message="realize_chord is not yet implemented. Coming in Phase 2.",
-        ),
-    )
+    service = get_service()
+    response = service.realize_chord(request)
+
+    if not response.success:
+        raise HTTPException(
+            status_code=400,
+            detail=response.error.model_dump() if response.error else "Unknown error",
+        )
+
+    return response
 
 
 def create_app() -> FastAPI:

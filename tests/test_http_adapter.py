@@ -82,32 +82,107 @@ class TestExportMidiEndpoint:
         assert response.status_code == 422
 
 
-class TestNotImplementedEndpoints:
-    """Tests for not-yet-implemented endpoints."""
+class TestGenerateMelodyEndpoint:
+    """Tests for /generate_melody endpoint."""
 
-    def test_generate_melody_not_implemented(self, client):
-        """generate_melody returns not implemented."""
+    def test_generate_melody_basic(self, client):
+        """Generate a simple melody."""
         response = client.post(
             "/generate_melody",
             json={
                 "key": "C major",
-                "length_measures": 8,
+                "length_measures": 2,
             },
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["success"] is False
-        assert "NOT_IMPLEMENTED" in str(data["error"])
+        assert data["success"] is True
+        assert "melody" in data["data"]
+        assert "metadata" in data["data"]
+        assert data["data"]["metadata"]["measures"] == 2
 
-    def test_realize_chord_not_implemented(self, client):
-        """realize_chord returns not implemented."""
+    def test_generate_melody_with_constraints(self, client):
+        """Generate melody with contour and range constraints."""
+        response = client.post(
+            "/generate_melody",
+            json={
+                "key": "D dorian",
+                "length_measures": 4,
+                "contour": "arch",
+                "range_low": "D4",
+                "range_high": "D5",
+                "rhythmic_density": "sparse",
+                "seed": 42,
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["data"]["metadata"]["key"] == "D dorian"
+        assert data["data"]["metadata"]["seed_used"] == 42
+
+    def test_generate_melody_invalid_key(self, client):
+        """Invalid key format returns 422."""
+        response = client.post(
+            "/generate_melody",
+            json={
+                "key": "invalid",
+                "length_measures": 4,
+            },
+        )
+        assert response.status_code == 422
+
+
+class TestRealizeChordEndpoint:
+    """Tests for /realize_chord endpoint."""
+
+    def test_realize_chord_basic(self, client):
+        """Realize a simple chord."""
         response = client.post(
             "/realize_chord",
             json={"chord_symbol": "Cmaj7"},
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["success"] is False
+        assert data["success"] is True
+        assert "voicing" in data["data"]
+        assert "analysis" in data["data"]
+        assert len(data["data"]["voicing"]["notes"]) > 0
+
+    def test_realize_chord_with_style(self, client):
+        """Realize chord with drop2 voicing."""
+        response = client.post(
+            "/realize_chord",
+            json={
+                "chord_symbol": "Dm7",
+                "voicing_style": "drop2",
+                "instrument": "guitar",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["data"]["analysis"]["voicing_style"] == "drop2"
+
+    def test_realize_chord_slash(self, client):
+        """Realize chord with custom bass note."""
+        response = client.post(
+            "/realize_chord",
+            json={
+                "chord_symbol": "G7",
+                "bass_note": "B2",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        # Bass note should be the lowest
+        notes = data["data"]["voicing"]["notes"]
+        assert notes[0].startswith("B")
+
+
+class TestNotImplementedEndpoints:
+    """Tests for not-yet-implemented endpoints."""
 
     def test_transform_phrase_not_implemented(self, client):
         """transform_phrase returns not implemented."""

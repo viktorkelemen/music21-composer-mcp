@@ -12,13 +12,15 @@ from music21 import midi, tempo
 from composer_mcp.core.models import (
     ApiResponse,
     ExportMidiRequest,
+    MelodyRequest,
     MidiData,
     MidiMetadata,
     MidiResponseData,
+    RealizeChordRequest,
     Warning,
 )
 from composer_mcp.core.validation import parse_input, stream_to_abc
-from composer_mcp.errors import success_response, error_response
+from composer_mcp.errors import error_response, success_response
 
 if TYPE_CHECKING:
     from music21.stream import Stream
@@ -35,6 +37,22 @@ class CompositionService:
     def __init__(self):
         # Pre-import music21 to warm up
         import music21  # noqa: F401
+
+    def realize_chord(self, request: RealizeChordRequest) -> ApiResponse:
+        """Generate specific voicings for chord symbols."""
+        try:
+            from composer_mcp.core.harmony import realize_chord
+            return realize_chord(request)
+        except Exception as e:
+            return error_response(e)
+
+    def generate_melody(self, request: MelodyRequest) -> ApiResponse:
+        """Generate a melodic line based on constraints."""
+        try:
+            from composer_mcp.core.melody import generate_melody
+            return generate_melody(request)
+        except Exception as e:
+            return error_response(e)
 
     def export_midi(self, request: ExportMidiRequest) -> ApiResponse:
         """
