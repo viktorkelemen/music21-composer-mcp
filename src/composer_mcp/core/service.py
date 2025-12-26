@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import random
 from functools import lru_cache
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from music21 import midi, tempo
 
