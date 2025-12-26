@@ -12,7 +12,7 @@ def run_http(host: str = "127.0.0.1", port: int = 8000) -> None:
     from composer_mcp.adapters.http_adapter import app
 
     print(f"Starting HTTP server at http://{host}:{port}")
-    print("API docs available at http://{host}:{port}/docs")
+    print(f"API docs available at http://{host}:{port}/docs")
     uvicorn.run(app, host=host, port=port)
 
 

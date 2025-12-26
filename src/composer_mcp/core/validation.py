@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from io import StringIO
 from typing import TYPE_CHECKING
 
 from music21 import converter, stream
@@ -167,13 +166,10 @@ def stream_to_abc(s: "Stream") -> str:
     """Convert a music21 Stream to ABC notation."""
     from music21 import abcFormat
 
-    handler = abcFormat.ABCHandler()
     # music21's ABC export is limited, this is a best-effort
     try:
         return abcFormat.translate.streamToABCText(s)
-    except Exception:
+    except (AttributeError, TypeError, ValueError):
         # Fallback: return a minimal representation
-        notes = []
-        for n in s.recurse().notes:
-            notes.append(n.nameWithOctave)
+        notes = [n.nameWithOctave for n in s.recurse().notes]
         return " ".join(notes)

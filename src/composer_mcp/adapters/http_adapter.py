@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from composer_mcp.core.models import (
     ApiResponse,
+    ErrorDetail,
     ExportMidiRequest,
     MelodyRequest,
     TransformRequest,
@@ -27,7 +28,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,  # Disabled with wildcard origins for security
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -68,10 +69,10 @@ async def generate_melody(request: MelodyRequest) -> ApiResponse:
     """
     return ApiResponse(
         success=False,
-        error={
-            "code": "NOT_IMPLEMENTED",
-            "message": "generate_melody is not yet implemented. Coming in Phase 2.",
-        },
+        error=ErrorDetail(
+            code="NOT_IMPLEMENTED",
+            message="generate_melody is not yet implemented. Coming in Phase 2.",
+        ),
     )
 
 
@@ -84,10 +85,10 @@ async def transform_phrase(request: TransformRequest) -> ApiResponse:
     """
     return ApiResponse(
         success=False,
-        error={
-            "code": "NOT_IMPLEMENTED",
-            "message": "transform_phrase is not yet implemented. Coming in Phase 5.",
-        },
+        error=ErrorDetail(
+            code="NOT_IMPLEMENTED",
+            message="transform_phrase is not yet implemented. Coming in Phase 5.",
+        ),
     )
 
 
@@ -100,10 +101,10 @@ async def reharmonize(request: ReharmonizeRequest) -> ApiResponse:
     """
     return ApiResponse(
         success=False,
-        error={
-            "code": "NOT_IMPLEMENTED",
-            "message": "reharmonize is not yet implemented. Coming in Phase 3.",
-        },
+        error=ErrorDetail(
+            code="NOT_IMPLEMENTED",
+            message="reharmonize is not yet implemented. Coming in Phase 3.",
+        ),
     )
 
 
@@ -116,10 +117,10 @@ async def add_voice(request: AddVoiceRequest) -> ApiResponse:
     """
     return ApiResponse(
         success=False,
-        error={
-            "code": "NOT_IMPLEMENTED",
-            "message": "add_voice is not yet implemented. Coming in Phase 4.",
-        },
+        error=ErrorDetail(
+            code="NOT_IMPLEMENTED",
+            message="add_voice is not yet implemented. Coming in Phase 4.",
+        ),
     )
 
 
@@ -132,10 +133,10 @@ async def realize_chord(request: RealizeChordRequest) -> ApiResponse:
     """
     return ApiResponse(
         success=False,
-        error={
-            "code": "NOT_IMPLEMENTED",
-            "message": "realize_chord is not yet implemented. Coming in Phase 2.",
-        },
+        error=ErrorDetail(
+            code="NOT_IMPLEMENTED",
+            message="realize_chord is not yet implemented. Coming in Phase 2.",
+        ),
     )
 
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import base64
 import random
-from io import BytesIO
-from typing import TYPE_CHECKING, Optional
+from functools import lru_cache
+from typing import TYPE_CHECKING
 
 from music21 import midi, tempo
 
@@ -168,13 +168,7 @@ class CompositionService:
         return stream
 
 
-# Global service instance
-_service: Optional[CompositionService] = None
-
-
+@lru_cache(maxsize=1)
 def get_service() -> CompositionService:
-    """Get or create the global service instance."""
-    global _service
-    if _service is None:
-        _service = CompositionService()
-    return _service
+    """Get or create the global service instance (thread-safe via lru_cache)."""
+    return CompositionService()

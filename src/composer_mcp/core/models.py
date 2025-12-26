@@ -182,6 +182,11 @@ class TransformRequest(BaseModel):
     direction: Literal["up", "down"] = Field(default="up", description="Direction for sequence")
     append: bool = Field(default=True, description="Append to original or return only transformed")
 
+    @field_validator("interval")
+    @classmethod
+    def check_interval(cls, v: str) -> str:
+        return validate_interval(v)
+
 
 class ReharmonizeRequest(BaseModel):
     """Request for reharmonize tool."""
