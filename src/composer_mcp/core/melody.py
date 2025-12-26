@@ -5,7 +5,7 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING, Optional
 
-from music21 import duration, interval, key, note, pitch, scale, stream
+from music21 import duration, interval, key, note, pitch, stream
 
 from composer_mcp.core.models import (
     ApiResponse,
@@ -19,6 +19,7 @@ from composer_mcp.core.models import (
     Warning,
 )
 from composer_mcp.errors import (
+    InvalidKeyError,
     InvalidRangeError,
     UnsatisfiableConstraintsError,
     success_response,
@@ -57,7 +58,11 @@ def parse_key_signature(key_str: str) -> key.Key:
     """Parse key string like 'C major' or 'D dorian' into music21 Key."""
     parts = key_str.strip().split()
     if len(parts) != 2:
-        raise ValueError(f"Invalid key format: {key_str}")
+        raise InvalidKeyError(
+            f"Invalid key format: {key_str}",
+            field="key",
+            suggestions=["C major", "D minor", "G dorian"],
+        )
 
     tonic = parts[0]
     mode = parts[1].lower()
@@ -271,9 +276,11 @@ def generate_melody(request: MelodyRequest) -> ApiResponse:
             field="range_low",
         )
 
-    # Initialize RNG
-    rng = random.Random(request.seed)
-    seed_used = request.seed if request.seed is not None else rng.randint(0, 2**31)
+    # Initialize RNG with deterministic seed
+    if request.seed is not None:
+        seed_used = request.seed
+    else:
+        seed_used = random.randint(0, 2**31)
     rng = random.Random(seed_used)
 
     # Generate rhythm

@@ -11,7 +11,7 @@ from composer_mcp.core.melody import (
     select_next_pitch,
 )
 from composer_mcp.core.models import ContourType, MelodyRequest, RhythmicDensity
-from composer_mcp.errors import InvalidRangeError, UnsatisfiableConstraintsError
+from composer_mcp.errors import InvalidKeyError, InvalidRangeError, UnsatisfiableConstraintsError
 
 
 class TestParseKeySignature:
@@ -41,8 +41,8 @@ class TestParseKeySignature:
         assert "F#" in k.tonic.name or k.tonic.name == "F#"
 
     def test_invalid_format_raises(self):
-        """Invalid format raises ValueError."""
-        with pytest.raises(ValueError, match="Invalid key format"):
+        """Invalid format raises InvalidKeyError."""
+        with pytest.raises(InvalidKeyError):
             parse_key_signature("invalid")
 
 

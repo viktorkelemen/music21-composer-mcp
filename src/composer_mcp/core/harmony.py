@@ -257,7 +257,7 @@ def realize_chord(request: RealizeChordRequest) -> ApiResponse:
     response_data = ChordResponseData(
         voicing=VoicingData(
             notes=[p.nameWithOctave for p in voiced],
-            midi_pitches=[p.midi for p in voiced],
+            midi_pitches=[int(p.midi) for p in voiced],
             musicxml=musicxml,
         ),
         analysis=VoicingAnalysis(
@@ -270,7 +270,7 @@ def realize_chord(request: RealizeChordRequest) -> ApiResponse:
     )
 
     # Generate alternatives
-    alt_styles = [s for s in VoicingStyle if s != request.voicing_style]
+    alt_styles = [vs for vs in VoicingStyle if vs != request.voicing_style]
     for style in alt_styles[:2]:  # Include 2 alternatives
         if style == VoicingStyle.CLOSE:
             alt_voiced = close_voicing(pitches, 0)
