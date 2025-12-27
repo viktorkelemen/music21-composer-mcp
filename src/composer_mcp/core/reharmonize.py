@@ -6,13 +6,12 @@ import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
-from music21 import chord, harmony, key, roman, stream
+from music21 import chord, harmony, roman, stream
 
 from composer_mcp.core.models import (
     ApiResponse,
     HarmonizationStyle,
     ReharmonizeRequest,
-    Warning,
 )
 from composer_mcp.errors import (
     EmptyInputError,
@@ -35,7 +34,7 @@ class StyleRules:
     prefer_extensions: bool
     common_progressions: list[list[str]]
     cadence_patterns: dict[str, list[str]]
-    substitutions: dict[str, dict[str, str]]
+    substitutions: dict[str, str]  # Maps chord to substitution (e.g., "V7" -> "bII7")
     avoid_parallel_fifths: bool = True
     avoid_parallel_octaves: bool = True
     prefer_root_position: bool = False
@@ -207,6 +206,7 @@ def get_chord_candidates(
     rules: StyleRules,
     previous_chord: Optional[str] = None,
     is_cadence: bool = False,
+    rng: Optional[random.Random] = None,
 ) -> list[tuple[str, float]]:
     """
     Generate chord candidates that fit the melody notes.
@@ -260,7 +260,8 @@ def get_chord_candidates(
                         score += 0.2
 
             # Slight randomness for variety
-            score += random.uniform(-0.1, 0.1)
+            if rng:
+                score += rng.uniform(-0.1, 0.1)
 
             candidates.append((numeral_str, score))
 
@@ -276,6 +277,7 @@ def select_chord(
     bass_motion_pref: str,
     previous_chord: Optional[str],
     music_key: "Key",
+    rng: Optional[random.Random] = None,
 ) -> str:
     """
     Select a chord from candidates based on preferences.
@@ -323,7 +325,7 @@ def select_chord(
 
     # Weighted random selection
     total = sum(max(0.1, score) for _, score in top_candidates)
-    r = random.random() * total
+    r = (rng.random() if rng else random.random()) * total
     cumulative = 0
     for numeral, score in top_candidates:
         cumulative += max(0.1, score)
@@ -508,11 +510,6 @@ def reharmonize(request: ReharmonizeRequest) -> ApiResponse:
         # Get style rules
         rules = STYLE_RULES.get(request.style, CLASSICAL_RULES)
 
-        # Determine if extensions should be allowed
-        allow_extended = request.allow_extended
-        if allow_extended is None:
-            allow_extended = rules.prefer_extensions
-
         # Get time signature
         time_sigs = melody.getTimeSignatures()
         time_sig_num = time_sigs[0].numerator if time_sigs else 4
@@ -524,9 +521,12 @@ def reharmonize(request: ReharmonizeRequest) -> ApiResponse:
         harmonizations = []
         num_attempts = request.num_options * 5  # Generate extra, keep best
 
+        # Use local RNG to avoid mutating global state
+        base_seed = hash(request.melody) % (2**31)
+
         for attempt in range(num_attempts):
-            # Seed for variety across attempts
-            random.seed(attempt * 1000 + hash(request.melody) % 10000)
+            # Create local RNG for this attempt
+            rng = random.Random(base_seed + attempt * 1000)
 
             progression = []
 
@@ -546,6 +546,7 @@ def reharmonize(request: ReharmonizeRequest) -> ApiResponse:
                     rules=rules,
                     previous_chord=progression[-1] if progression else None,
                     is_cadence=is_cadence,
+                    rng=rng,
                 )
 
                 selected = select_chord(
@@ -553,6 +554,7 @@ def reharmonize(request: ReharmonizeRequest) -> ApiResponse:
                     bass_motion_pref=request.bass_motion,
                     previous_chord=progression[-1] if progression else None,
                     music_key=detected_key,
+                    rng=rng,
                 )
 
                 progression.append(selected)
@@ -596,6 +598,8 @@ def reharmonize(request: ReharmonizeRequest) -> ApiResponse:
                 break
 
         # Build response
+        from composer_mcp.core.validation import stream_to_musicxml
+
         result_harmonizations = []
         for rank, h in enumerate(unique_harmonizations, 1):
             # Build MusicXML with chords
@@ -615,7 +619,6 @@ def reharmonize(request: ReharmonizeRequest) -> ApiResponse:
                 except Exception:
                     pass
 
-            from composer_mcp.core.validation import stream_to_musicxml
             musicxml = stream_to_musicxml(harm_stream)
 
             result_harmonizations.append({
