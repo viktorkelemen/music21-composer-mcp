@@ -101,15 +101,20 @@ async def reharmonize(request: ReharmonizeRequest) -> ApiResponse:
     """
     Generate alternative chord progressions for a melody.
 
-    Not yet implemented - returns placeholder response.
+    Supports 4 harmonization styles (classical, jazz, pop, modal),
+    configurable chord rhythm, and bass motion preferences.
+    Returns ranked options with voice leading scores.
     """
-    return ApiResponse(
-        success=False,
-        error=ErrorDetail(
-            code="NOT_IMPLEMENTED",
-            message="reharmonize is not yet implemented. Coming in Phase 3.",
-        ),
-    )
+    service = get_service()
+    response = service.reharmonize(request)
+
+    if not response.success:
+        raise HTTPException(
+            status_code=400,
+            detail=response.error.model_dump() if response.error else "Unknown error",
+        )
+
+    return response
 
 
 @app.post("/add_voice", response_model=ApiResponse)

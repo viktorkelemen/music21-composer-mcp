@@ -181,6 +181,75 @@ class TestRealizeChordEndpoint:
         assert notes[0].startswith("B")
 
 
+class TestReharmonizeEndpoint:
+    """Tests for /reharmonize endpoint."""
+
+    def test_reharmonize_basic(self, client):
+        """Reharmonize a simple melody."""
+        response = client.post(
+            "/reharmonize",
+            json={
+                "melody": "C4, D4, E4, G4",
+                "style": "classical",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert "harmonizations" in data["data"]
+        assert "detected_key" in data["data"]
+        assert len(data["data"]["harmonizations"]) > 0
+
+    def test_reharmonize_jazz_style(self, client):
+        """Reharmonize with jazz style."""
+        response = client.post(
+            "/reharmonize",
+            json={
+                "melody": "C4:h, E4:h, G4:h, B4:h",
+                "style": "jazz",
+                "num_options": 3,
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["data"]["style"] == "jazz"
+        # Jazz style should have at least one harmonization
+        assert len(data["data"]["harmonizations"]) >= 1
+
+    def test_reharmonize_with_chord_rhythm(self, client):
+        """Reharmonize with per-beat chord changes."""
+        response = client.post(
+            "/reharmonize",
+            json={
+                "melody": "C4, D4, E4, F4, G4, A4, B4, C5",
+                "style": "pop",
+                "chord_rhythm": "per_beat",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["data"]["chord_rhythm"] == "per_beat"
+
+    def test_reharmonize_includes_scores(self, client):
+        """Harmonizations include scoring breakdown."""
+        response = client.post(
+            "/reharmonize",
+            json={
+                "melody": "C4, E4, G4, C5",
+                "style": "classical",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        harm = data["data"]["harmonizations"][0]
+        assert "scores" in harm
+        assert "voice_leading" in harm["scores"]
+        assert "chord_melody_fit" in harm["scores"]
+        assert "overall" in harm["scores"]
+
+
 class TestNotImplementedEndpoints:
     """Tests for not-yet-implemented endpoints."""
 
@@ -191,19 +260,6 @@ class TestNotImplementedEndpoints:
             json={
                 "input_stream": "C4, D4, E4",
                 "transformation": "sequence",
-            },
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is False
-
-    def test_reharmonize_not_implemented(self, client):
-        """reharmonize returns not implemented."""
-        response = client.post(
-            "/reharmonize",
-            json={
-                "melody": "C4, D4, E4",
-                "style": "jazz",
             },
         )
         assert response.status_code == 200

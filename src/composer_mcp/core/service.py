@@ -17,6 +17,7 @@ from composer_mcp.core.models import (
     MidiMetadata,
     MidiResponseData,
     RealizeChordRequest,
+    ReharmonizeRequest,
     Warning,
 )
 from composer_mcp.core.validation import parse_input, stream_to_abc
@@ -51,6 +52,14 @@ class CompositionService:
         try:
             from composer_mcp.core.melody import generate_melody
             return generate_melody(request)
+        except Exception as e:
+            return error_response(e)
+
+    def reharmonize(self, request: ReharmonizeRequest) -> ApiResponse:
+        """Generate alternative chord progressions for a melody."""
+        try:
+            from composer_mcp.core.reharmonize import reharmonize
+            return reharmonize(request)
         except Exception as e:
             return error_response(e)
 
