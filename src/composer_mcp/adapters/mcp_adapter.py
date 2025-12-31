@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
 from typing import Any
 
 from mcp.server import Server
@@ -15,8 +17,6 @@ from composer_mcp.core.models import (
     MelodyRequest,
     RealizeChordRequest,
     ReharmonizeRequest,
-    TransformRequest,
-    AddVoiceRequest,
 )
 
 # Create the MCP server
@@ -245,39 +245,19 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     try:
         if name == "generate_melody":
             request = MelodyRequest(**arguments)
-            response = service.generate_melody(request)
+            response = await asyncio.to_thread(service.generate_melody, request)
 
         elif name == "realize_chord":
             request = RealizeChordRequest(**arguments)
-            response = service.realize_chord(request)
+            response = await asyncio.to_thread(service.realize_chord, request)
 
         elif name == "reharmonize":
             request = ReharmonizeRequest(**arguments)
-            response = service.reharmonize(request)
+            response = await asyncio.to_thread(service.reharmonize, request)
 
         elif name == "export_midi":
             request = ExportMidiRequest(**arguments)
-            response = service.export_midi(request)
-
-        elif name == "transform_phrase":
-            # Not yet implemented
-            return [TextContent(
-                type="text",
-                text=json.dumps({
-                    "success": False,
-                    "error": {"code": "NOT_IMPLEMENTED", "message": "transform_phrase coming in Phase 5"}
-                })
-            )]
-
-        elif name == "add_voice":
-            # Not yet implemented
-            return [TextContent(
-                type="text",
-                text=json.dumps({
-                    "success": False,
-                    "error": {"code": "NOT_IMPLEMENTED", "message": "add_voice coming in Phase 4"}
-                })
-            )]
+            response = await asyncio.to_thread(service.export_midi, request)
 
         else:
             return [TextContent(
@@ -295,11 +275,13 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         )]
 
     except Exception as e:
+        # Log full exception for debugging, return generic message
+        logging.exception(f"Error in tool {name}")
         return [TextContent(
             type="text",
             text=json.dumps({
                 "success": False,
-                "error": {"code": "INTERNAL_ERROR", "message": str(e)}
+                "error": {"code": "INTERNAL_ERROR", "message": "An internal error occurred"}
             })
         )]
 
@@ -315,5 +297,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())
