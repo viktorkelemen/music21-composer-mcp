@@ -33,7 +33,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # MCP support requires Python 3.10+
-mcp = ["mcp>=1.0.0", "fastmcp>=2.0.0"]
+mcp = ["mcp>=1.0.0"]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
@@ -46,6 +46,7 @@ dev = [
 
 [project.scripts]
 composer-mcp = "composer_mcp.launcher:main"
+composer-mcp-server = "composer_mcp.adapters.mcp_adapter:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/composer_mcp"]
